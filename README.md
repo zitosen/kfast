@@ -1,2 +1,2 @@
-# kfast is a collect of codes based on atomic simulation theories
+# KFast is a collect of codes based on atomic simulation theories
 # by zito
