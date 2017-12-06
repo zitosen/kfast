@@ -1,0 +1,7 @@
+#!/usr/bin/gnuplot 
+#
+# 'pause -1' make x11 not quit
+
+
+splot 'etot' u 1:2:3 w points pointtype 7 pointsize 6
+pause -1
