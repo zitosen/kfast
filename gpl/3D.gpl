@@ -1,0 +1,40 @@
+# 2011/12/6  ----zito
+set encoding iso_8859_1
+set xlabel 'Collision energy / eV'
+set ylabel 'Scattering angle, {/Symbol q} / degree' offset 2,0,0
+set zlabel 'DCS / {\305}^2 sr^{-1}' offset 4,0,0 rotate by 90
+#set term X11
+set term postscript eps enhanced solid  color
+#set term post color eps enhanced size 10,7 solid 
+set output 'dcsv1_3D.eps'
+#set xtics ('{/Symbol p}' pi)
+#set title 'Splitting PESs'
+#set dgrid3d 100,100 # The grids in the 3D surface
+#set border 31+96+256+512
+set tics in
+set xtic offset 0.2,-0.2,0
+set ytic offset 0.2,-0.2,0
+set ztic offset 0,0,0
+set pm3d
+#set hidden3d
+set nokey
+#set contour surface
+#set nosurface
+set view 65,30
+set ticslevel 0
+#set xyplane at 0
+#set cntrpara levels incremental 0,10,100
+#set cntrparam levels incremental 0,10.0,80
+#set palette gray
+#set palette rgbformulae 3,11,6
+# set palette rgbformulae 7,5,15
+#set palette rgbformulae 30,31,32
+set palette rgbformulae 22,13,-31
+#set grid
+# set palette rgbformulae 33,13,10 
+#set  grid lc rgbcolor "#BBBBBB"
+set xrange [0.03:0.4]
+set yrange [0:180]
+set zrange [0:30]
+#set zrange [0:30]
+splot 'dcsv1.dat' using ($1-0.271119):2:3 with pm3d

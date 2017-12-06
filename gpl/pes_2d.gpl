@@ -1,0 +1,15 @@
+# 2011/12/6  ----zito
+set xlabel 'Bond Angle' -1 font 'Time-Roman,26'
+set ylabel 'Energy' -1 font 'Time-Roman,26'
+#set size 0.9,0.9
+set term postscript eps enhanced solid  color
+set output 'pes_2d.ps'
+#set xtics ('{/Symbol p}' pi)
+unset xtics
+unset ytics
+set style data lines
+set style line 1 lt 1 lw 5
+set style line 2 lt 2 lw 5 
+#set title 'Splitting PESs caused by Renner-Teller effect'
+plot [3.142:1.047] [-9:60] 'ch2wellpot' using 1:2 with lines ls 1 notitle #, \
+#'ch2wellpot' using 1:3 with lines ls 2 notitle

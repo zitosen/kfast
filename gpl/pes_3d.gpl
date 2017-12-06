@@ -1,0 +1,30 @@
+# 2011/12/6  ----zito
+set xlabel 'Bond Angle' -1 font 'Time-Roman,22'
+set ylabel 'R1' -1 font 'Time-Roman,22'
+set zlabel 'Energy(kcal/mol)' font 'Time-Roman,22'
+#set size 0.9,0.9
+set term postscript eps enhanced solid  color
+set output 'pes_3d.ps'
+#set xtics ('{/Symbol p}' pi)
+#unset xtics
+#unset ytics
+set ztics 0,10,60
+#set data style lines
+set style line 1 lt 1 lw 1  
+set style line 2 lt 2 lw 1 
+#set title 'Splitting PESs'
+set key out
+#set dgrid3d 100,100 # The grids in the 3D surface
+set hidden3d
+#set contour surface
+#set nosurface
+set view 60,30
+#set cntrpara levels incremental 0,10,100
+#set cntrparam levels incremental 0,10.0,80
+set pm3d
+#set palette gray
+set palette rgbformulae 33,13,10 
+splot [180:60] [1.8:2.5] [-9:60]  'ch2wellpot' using 1:2:3 with lines ls 1, \
+'ch2wellpot' using 1:2:4 with lines ls 2
+#splot [180:60] [1.8:2.5] [-9:100]  'ch2wellpot' using 1:2:3, \
+#'ch2wellpot' using 1:2:4 
