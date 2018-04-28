@@ -9,7 +9,10 @@
 !          b_n=1/sqrt(a)*e^(i k_n x)
 ! Units  : atomic Rydberg units, hbar^2/2m = 1
 ! Library: lapack, dsyev
-
+! Originate from Paolo Giannozzi' lecture notes "Numerical Methods in
+! Quantum Mechanics"
+! Modified by zito, 2018/4/28
+!
       implicit none
       integer, parameter :: dp = selected_real_kind(14,200)
       real(dp), parameter :: pi=3.14159265358979_dp
