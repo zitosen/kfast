@@ -20,13 +20,13 @@
       filename="nonefile"
       OPEN(UNIT=7,FILE="list.txt",STATUS="OLD")
 ! Table title
-        WRITE(*,'(A)') "File number     Voc     Jsc     PCE     FF      &
+        WRITE(*,'(A)') "File_number     Voc     Jsc     PCE     FF      &
           Rsh   Rs"
         i_file=0
-        DO WHILE(filename(1:3) .NE. "EOF")
-          READ(UNIT=7,FMT="(A)") filename
-          i_file=i_file+1
-!          WRITE(*,*) i_file, filename        
+      DO WHILE(.TRUE.)
+        READ(UNIT=7,FMT="(A)") filename
+        IF (TRIM(ADJUSTL(filename)) .EQ. "EOF") EXIT
+        i_file=i_file+1
 !      
         OPEN(UNIT=77,FILE=filename,STATUS="OLD")
 !        WRITE(*,'(2A)') "The file name is ", filename
@@ -65,7 +65,7 @@
             v_current_min=voltage
           ENDIF
 ! find Jsc
-          IF (voltage .LT. 1.d-20) THEN
+          IF (voltage .EQ. 0.d0) THEN
             v_zero=voltage
             current_v_zero=current
           ENDIF
