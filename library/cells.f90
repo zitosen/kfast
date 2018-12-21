@@ -1,10 +1,17 @@
 ! Processing data from electrochemical workstation to obtain 
 ! cell properties
 ! by zito, 2018/12/17
+!
+! some bugs fixed
+! Parameter 'n_slop_average' is added
+! by zito, 2018/12/21
 
       PROGRAM cell_property
       IMPLICIT NONE
       INTEGER, PARAMETER       :: sr=4,sc=8,dr=8,dc=16
+! n_slop_average*2 + 1 is the number of data used to calculate slope of
+! linear regression line
+      INTEGER, PARAMETER       :: n_slop_average=10
       REAL(KIND=dr), PARAMETER :: area=0.4d-1
       CHARACTER(LEN=40)        :: filename
       CHARACTER(LEN=79)        :: buffer
@@ -15,18 +22,17 @@
                                   v_x_c,pce,ff,temp,slope_rsh,slope_rs,&
                                   voltage_ave, current_ave, sum_xy, &
                                   sum_x2
-      REAL(KIND=dr),DIMENSION(-50:50) :: voltage_col,current_col
+      REAL(KIND=dr),DIMENSION(-n_slop_average:n_slop_average) :: & 
+                                  voltage_col,current_col
 !
       filename="nonefile"
       OPEN(UNIT=7,FILE="list.txt",STATUS="OLD")
 ! Table title
         WRITE(*,'(A)') "File_number     Voc     Jsc     PCE     FF      &
           Rsh   Rs"
-        i_file=0
       DO WHILE(.TRUE.)
         READ(UNIT=7,FMT="(A)") filename
         IF (TRIM(ADJUSTL(filename)) .EQ. "EOF") EXIT
-        i_file=i_file+1
 !      
         OPEN(UNIT=77,FILE=filename,STATUS="OLD")
 !        WRITE(*,'(2A)') "The file name is ", filename
@@ -44,8 +50,7 @@
           READ(77, FMT="(A79)", IOSTAT=i_read) buffer
 !          WRITE(*,*) buffer, n_row
         ENDDO
-!        WRITE(*,'(A,I6,A)') "There're in total", n_row-1, " rows data."
-! turn back to the begining of the data 
+!
         REWIND(77)
         read_flag="reading  "
         DO WHILE (read_flag .NE. "Potential")
@@ -59,6 +64,7 @@
         pce=1.d-20
         DO i=1,n_row-1
           READ(77,*) voltage,current
+!          WRITE(*,*) voltage,current
 ! find Voc
           IF (ABS(current) .LE. ABS(current_min)) THEN
             current_min=current
@@ -80,10 +86,6 @@
 ! FF
         ff=ABS(pce/v_current_min/(current_v_zero*1000/area))
 !
-!        WRITE(*,'(A11,F14.5)') "Voc     :  ", v_current_min
-!        WRITE(*,'(A11,F14.5,2E12.4)') "Jsc     :  ", current_v_zero*1000/area
-!        WRITE(*,'(A11,F14.5)') "PCE     :  ", pce
-!        WRITE(*,'(A11,F14.5)') "FF      :  ", ff*100
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!            
 !                 Calculate Rsh
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -99,18 +101,15 @@
 ! now read data
         voltage=1.d0
         current=1.d0
-        DO i=1, 21
-          READ(77,"(A79)") buffer
-        ENDDO
         DO WHILE (voltage .NE. 0.d0) 
           READ(77,*) voltage,current
         ENDDO
 !        WRITE(*,*) voltage,current
-! backspace 51 lines
-        DO i=1,51
+! backspace n_slop_average+1 lines
+        DO i=1,n_slop_average+1
           BACKSPACE(77)
         ENDDO
-! average 50 slopes
+! average n_slop_average*2+1 data
         voltage_col(:)=0.d0
         current_col(:)=0.d0
         voltage_ave=0.d0
@@ -118,7 +117,7 @@
         sum_xy=0.d0
         sum_x2=0.d0
         slope_rsh=0.d0
-        DO i=-50,50,1
+        DO i = -n_slop_average, n_slop_average, 1
           READ(77,*) voltage_col(i),current_col(i)
           voltage_ave=voltage_ave+voltage_col(i)
           current_ave=current_ave+current_col(i)
@@ -126,7 +125,7 @@
         ENDDO
         voltage_ave=voltage_ave/100
         current_ave=current_ave/100
-        DO i=-50,50,1
+        DO i = -n_slop_average, n_slop_average, 1
           sum_xy = sum_xy + (voltage_col(i)-voltage_ave) * &
                    (current_col(i)-current_ave)
           sum_x2 = sum_x2 + (voltage_col(i)-voltage_ave) ** 2
@@ -148,18 +147,15 @@
 ! now read data
         voltage=1.d0
         current=1.d3
-        DO i=1, 21
-          READ(77,"(A79)") buffer
-        ENDDO
         DO WHILE (current .NE. current_min)
           READ(77,*) voltage,current
         ENDDO
 !        WRITE(*,*) voltage,current 
-! backspace 51 lines
-        DO i=1,51
+! backspace n_slop_average+1 lines
+        DO i=1,n_slop_average+1
           BACKSPACE(77)
         ENDDO
-! average 50 slopes
+! average n_slop_average*2+1 data
         voltage_col(:)=0.d0
         current_col(:)=0.d0
         voltage_ave=0.d0
@@ -167,7 +163,7 @@
         sum_xy=0.d0
         sum_x2=0.d0
         slope_rs=0.d0
-        DO i=-50,50,1
+        DO i = -n_slop_average, n_slop_average, 1
           READ(77,*) voltage_col(i),current_col(i)
           voltage_ave=voltage_ave+voltage_col(i)
           current_ave=current_ave+current_col(i)
@@ -175,7 +171,7 @@
         ENDDO
         voltage_ave=voltage_ave/100
         current_ave=current_ave/100
-        DO i=-50,50,1
+        DO i = -n_slop_average, n_slop_average, 1
           sum_xy = sum_xy + (voltage_col(i)-voltage_ave) * &
                    (current_col(i)-current_ave)
           sum_x2 = sum_x2 + (voltage_col(i)-voltage_ave) ** 2
