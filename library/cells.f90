@@ -5,13 +5,16 @@
 ! some bugs fixed
 ! Parameter 'n_slop_average' is added
 ! by zito, 2018/12/21
+!
+! slope of Rs are calculated by three points
+! by zito, 2018/12/24 
 
       PROGRAM cell_property
       IMPLICIT NONE
       INTEGER, PARAMETER       :: sr=4,sc=8,dr=8,dc=16
 ! n_slop_average*2 + 1 is the number of data used to calculate slope of
 ! linear regression line
-      INTEGER, PARAMETER       :: n_slop_average=10
+      INTEGER, PARAMETER       :: n_slop_average=50
       REAL(KIND=dr), PARAMETER :: area=0.4d-1
       CHARACTER(LEN=40)        :: filename
       CHARACTER(LEN=79)        :: buffer
@@ -151,33 +154,46 @@
           READ(77,*) voltage,current
         ENDDO
 !        WRITE(*,*) voltage,current 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! backspace n_slop_average+1 lines
-        DO i=1,n_slop_average+1
-          BACKSPACE(77)
-        ENDDO
+!        DO i=1,n_slop_average-45+1
+!          BACKSPACE(77)
+!        ENDDO
 ! average n_slop_average*2+1 data
+!       voltage_col(:)=0.d0
+!       current_col(:)=0.d0
+!       voltage_ave=0.d0
+!       current_ave=0.d0
+!       sum_xy=0.d0
+!       sum_x2=0.d0
+!       slope_rs=0.d0
+!       DO i = -n_slop_average+45, n_slop_average-45, 1
+!         READ(77,*) voltage_col(i),current_col(i)
+!         voltage_ave=voltage_ave+voltage_col(i)
+!         current_ave=current_ave+current_col(i)
+!          WRITE(*,*) voltage_col(i),current_col(i)
+!       ENDDO
+!       voltage_ave=voltage_ave/100
+!       current_ave=current_ave/100
+!       DO i = -n_slop_average+45, n_slop_average-45, 1
+!         sum_xy = sum_xy + (voltage_col(i)-voltage_ave) * &
+!                  (current_col(i)-current_ave)
+!         sum_x2 = sum_x2 + (voltage_col(i)-voltage_ave) ** 2
+!       ENDDO
+!       slope_rs= sum_x2 / sum_xy * area
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! backspace  one line
+        BACKSPACE(77)
         voltage_col(:)=0.d0
         current_col(:)=0.d0
-        voltage_ave=0.d0
-        current_ave=0.d0
-        sum_xy=0.d0
-        sum_x2=0.d0
         slope_rs=0.d0
-        DO i = -n_slop_average, n_slop_average, 1
+        DO i = -1, 1, 1
           READ(77,*) voltage_col(i),current_col(i)
-          voltage_ave=voltage_ave+voltage_col(i)
-          current_ave=current_ave+current_col(i)
-!          WRITE(*,*) voltage_col(i),current_col(i)
         ENDDO
-        voltage_ave=voltage_ave/100
-        current_ave=current_ave/100
-        DO i = -n_slop_average, n_slop_average, 1
-          sum_xy = sum_xy + (voltage_col(i)-voltage_ave) * &
-                   (current_col(i)-current_ave)
-          sum_x2 = sum_x2 + (voltage_col(i)-voltage_ave) ** 2
-        ENDDO
-        slope_rs= sum_x2 / sum_xy * area
-!        WRITE(*,'(A11,F14.5)') "RS      :  ", slope_rs
+        slope_rs = (current_col(1)-current_col(-1)) / ((voltage_col(1)) &
+                   - voltage_col(-1))
+        slope_rs = slope_rs * area 
 ! data output
         filename=TRIM(ADJUSTL(filename))
         WRITE(*,'(A10,6F16.5)') filename, ABS(v_current_min), &
