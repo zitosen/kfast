@@ -113,7 +113,7 @@
 ! convert to a.u. 
 ! note (bohr2A**(-2))*(amu2au**(-1/2)) 
               temp=(0.d0,1.d0)*ddipole(j,l)*dpolar(i,l)                 &
-              *(bohr2A**(-4))*(amu2au**(-1/2))                          &
+              *(bohr2A**(-2))*(amu2au**(-1/2))                          &
               *(2*(red_mass(l)*amu2au)*(freq(l)/au2cm))**(-1)           &
               /((0.d0,1.d0)*(freq(l)-photon2)/au2cm+damp/au2cm)
 ! sum of vibrational modes
