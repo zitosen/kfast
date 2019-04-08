@@ -74,6 +74,7 @@
           WRITE(*,*) polar_m(j*3-2,i),polar_m(j*3-1,i),polar_m(j*3,i)
         ENDDO
 ! now calculate polarizability derivative (angstrom^4/amu)
+! unit should be angstrom^2*amu^(-1/2)
         dpolar(:,i)=(polar_p(:,i)-polar_m(:,i))/(2*DQ)
       ENDDO
       CLOSE(7)
@@ -81,7 +82,7 @@
 ! print out polarizability derivative
       OPEN(UNIT=7,FILE="ddpolar",STATUS="NEW")
       DO i=1,n_mode
-        WRITE(7,*) "mode",i,"(angstrom^4/amu)"
+        WRITE(7,*) "mode",i,"(angstrom^2*amu^(-1/2))"
         DO j=1,3
           WRITE(7,"(3F20.10)") dpolar(j*3-2,i),dpolar(j*3-1,i),dpolar(j*3,i)
         ENDDO
@@ -110,8 +111,9 @@
             DO l=1,n_mode
 ! vibrational quantum number v=0, v'=1; T=0 K
 ! convert to a.u. 
+! note (bohr2A**(-2))*(amu2au**(-1/2)) 
               temp=(0.d0,1.d0)*ddipole(j,l)*dpolar(i,l)                 &
-              *(bohr2A**(-4))*(amu2au**(-1))                            &
+              *(bohr2A**(-4))*(amu2au**(-1/2))                          &
               *(2*(red_mass(l)*amu2au)*(freq(l)/au2cm))**(-1)           &
               /((0.d0,1.d0)*(freq(l)-photon2)/au2cm+damp/au2cm)
 ! sum of vibrational modes
