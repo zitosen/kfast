@@ -1,5 +1,11 @@
 ! Calculate molecular vibrational second-order polarizability
 ! 2016.6.21, by zito
+!
+! A flag ipolar is added, ipolar=0: polarizability derivatives are read
+! in; ipolar=1: polarizability derivatives are computed by finite
+! difference
+! 2019.4.9, by zito
+!
 
       PROGRAM POLARIZABILITY_2ND
       IMPLICIT NONE
@@ -10,7 +16,8 @@
                                   PI=3.14159265358979323846264338328D0 
 ! note here DQ should be consistent with 'normal_mode_shift.f90' code
       REAL(KIND=dr), PARAMETER :: DQ=1.0D-2
-      INTEGER                  :: n_mode,ibegin,iend,nstep,i,j,k,l,m,n
+      INTEGER                  :: n_mode,ibegin,iend,nstep,i,j,k,l,m,n, &
+                                  ipolar
       REAL(KIND=dr)            :: step,damp,photon2,angle_sum,angle_vis,&
                                   angle_ir,Lxx_vis,Lyy_vis,Lzz_vis
       COMPLEX(KIND=dc)         :: temp
@@ -26,9 +33,10 @@
 !      
       CALL GETARG(1,arg1)
       arg1=TRIM(arg1)
+      ipolar=1
       OPEN(UNIT=7,FILE=arg1,STATUS="OLD")
       READ(7,'(A)') buffer
-      READ(7,*) n_mode,ibegin,iend,step,damp
+      READ(7,*) n_mode,ibegin,iend,step,damp,ipolar
       WRITE(*,*) TRIM(buffer)
       WRITE(*,*) n_mode,ibegin,iend,step,damp
       ALLOCATE(freq(1:n_mode))
@@ -41,7 +49,7 @@
         WRITE(*,*) freq(i),red_mass(i)
       END DO
 !
-! dipole moment derivative read in:
+! dipole moment derivative (in au) read in:
       READ(7,'(A)') buffer
       WRITE(*,*) TRIM(buffer)
       READ(7,*) buffer
@@ -50,44 +58,73 @@
         READ(7,*) ddipole(1,i),ddipole(2,i),ddipole(3,i)
         WRITE(*,*) ddipole(1,i),ddipole(2,i),ddipole(3,i)
       END DO
+!
+!
+        ALLOCATE(polar_p(1:9,1:n_mode))
+        ALLOCATE(polar_m(1:9,1:n_mode))
+        ALLOCATE(dpolar(1:9,1:n_mode))
+        polar_p=0.d0
+        polar_m=0.d0
+        dpolar=0.d0 
+      IF(ipolar==1) THEN
 ! polarizability read in:
-      READ(7,'(A)') buffer
-      WRITE(*,*) TRIM(buffer)
-      ALLOCATE(polar_p(1:9,1:n_mode))
-      ALLOCATE(polar_m(1:9,1:n_mode))
-      ALLOCATE(dpolar(1:9,1:n_mode))
+        READ(7,'(A)') buffer
+        WRITE(*,*) TRIM(buffer)
 ! order of polarizability and its derivatives:
 ! column --> mode(1),mode(2),...; row --> xx,yy,zz,xy,xz,yz,yx,zx,zy
-      DO i=1,n_mode
-        READ(7,'(A)') buffer
-        WRITE(*,*) TRIM(buffer)
-        DO j=1,3
-          READ(7,*) sbuffer,sbuffer,sbuffer,polar_p(j*3-2,i),polar_p(j*3-1,i),&
-          polar_p(j*3,i)
-          WRITE(*,*) polar_p(j*3-2,i),polar_p(j*3-1,i),polar_p(j*3,i)
-        ENDDO
-        READ(7,'(A)') buffer
-        WRITE(*,*) TRIM(buffer)
-        DO j=1,3
-          READ(7,*) sbuffer,sbuffer,sbuffer,polar_m(j*3-2,i),polar_m(j*3-1,i),&
-          polar_m(j*3,i)
-          WRITE(*,*) polar_m(j*3-2,i),polar_m(j*3-1,i),polar_m(j*3,i)
-        ENDDO
-! now calculate polarizability derivative (angstrom^4/amu)
+        DO i=1,n_mode
+          READ(7,'(A)') buffer
+          WRITE(*,*) TRIM(buffer)
+          DO j=1,3
+            READ(7,*) sbuffer,sbuffer,sbuffer,polar_p(j*3-2,i),polar_p(j*3-1,i),&
+            polar_p(j*3,i)
+            WRITE(*,*) polar_p(j*3-2,i),polar_p(j*3-1,i),polar_p(j*3,i)
+          ENDDO
+          READ(7,'(A)') buffer
+          WRITE(*,*) TRIM(buffer)
+          DO j=1,3
+            READ(7,*) sbuffer,sbuffer,sbuffer,polar_m(j*3-2,i),polar_m(j*3-1,i),&
+            polar_m(j*3,i)
+            WRITE(*,*) polar_m(j*3-2,i),polar_m(j*3-1,i),polar_m(j*3,i)
+          ENDDO
+! now calculate polarizability derivative
 ! unit should be angstrom^2*amu^(-1/2)
-        dpolar(:,i)=(polar_p(:,i)-polar_m(:,i))/(2*DQ)
-      ENDDO
-      CLOSE(7)
-!
-! print out polarizability derivative
-      OPEN(UNIT=7,FILE="ddpolar",STATUS="NEW")
-      DO i=1,n_mode
-        WRITE(7,*) "mode",i,"(angstrom^2*amu^(-1/2))"
-        DO j=1,3
-          WRITE(7,"(3F20.10)") dpolar(j*3-2,i),dpolar(j*3-1,i),dpolar(j*3,i)
+          dpolar(:,i)=(polar_p(:,i)-polar_m(:,i))/(2*DQ)
         ENDDO
-      ENDDO
-      CLOSE(7)
+        CLOSE(7)
+! print out polarizability derivative
+        OPEN(UNIT=7,FILE="ddpolar",STATUS="NEW")
+        DO i=1,n_mode
+          WRITE(7,*) "mode",i,"(angstrom^2*amu^(-1/2))"
+          DO j=1,3
+            WRITE(7,"(3F20.10)") dpolar(j*3-2,i),dpolar(j*3-1,i),dpolar(j*3,i)
+          ENDDO
+        ENDDO
+        CLOSE(7)
+!
+      ELSE IF(ipolar==0) THEN
+! for ipolar=0 polarizability derivatives are read directly, and
+! the orders are as below,
+!     xx,yy,zz
+!     xy,xz,yz
+!     yx,zx,zy
+! Note that it's not the same as the Gaussian output, while the same
+! as output of  the CP2K code.
+        READ(7,'(A)') buffer
+        WRITE(*,*) TRIM(buffer)
+        DO i=1,n_mode
+          READ(7,'(A)') buffer
+          WRITE(*,*) TRIM(buffer)
+          DO j=1,3
+            READ(7,*)  dpolar(j*3-2,i), dpolar(j*3-1,i), dpolar(j*3,i)
+            WRITE(*,*) dpolar(j*3-2,i), dpolar(j*3-1,i), dpolar(j*3,i)
+! now dpolar may be in A^2 * amu^(-1/2), which should be confirmed in
+! the gaussian output
+          ENDDO
+        ENDDO
+      ELSE
+        WRITE(*,*) "Check the parameter 'ipolar'!"
+      END IF
 !
 ! calculate second-order polarizability: polar_2nd
       nstep=INT((iend-ibegin+1)/step)
