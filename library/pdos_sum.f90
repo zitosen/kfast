@@ -6,7 +6,7 @@
       INTEGER, PARAMETER       :: sr=4,sc=8,dr=8,dc=16
       INTEGER                  :: ngrid,istart,iend,i,j
       CHARACTER(LEN=4)         :: label
-      CHARACTER(LEN=20)       :: filename
+      CHARACTER(LEN=20)       :: filename,buffer
       REAL(KIND=dr), ALLOCATABLE, DIMENSION(:) &
                                :: energy,s_up,s_down,p_up,p_down,d_up, &
                                   d_down
@@ -43,6 +43,7 @@
         WRITE(*,*) filename, "Reading..."
 !
         OPEN(UNIT=77,FILE=filename,STATUS="OLD")
+        IF(i.LT.9) READ(77,*) buffer ! note the DOS1...DOS8 files
         DO j=1,ngrid
         READ(77,*) energy(j),s_up(j),s_down(j),p_up(j),p_down(j), &
                    d_up(j),d_down(j)
