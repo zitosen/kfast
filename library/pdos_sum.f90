@@ -1,5 +1,8 @@
 ! Summation of site-projected DOS
 ! 2018.9.5, by zito
+!
+! DOS1...DOS8 reading error was fixed
+! 2019.12.2, by zito
 
       PROGRAM PDOS_SUM
       IMPLICIT NONE
