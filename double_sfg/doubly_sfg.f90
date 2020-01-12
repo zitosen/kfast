@@ -9,10 +9,11 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       PROGRAM dsfg_main
       USE constants
-      USE NC_shift 
+      USE NC_shift
+      USE huang_rhys 
       IMPLICIT NONE
       REAL(KIND=8) :: omega1,omega2,omega3
-      REAL(KIND=8),ALLOCATABLE :: freq(:),dq(:)
+      REAL(KIND=8),ALLOCATABLE :: freq(:),dq(:),sval(:),g_capital(:)
       INTEGER :: natom
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -26,12 +27,30 @@
       omega2=omega2/AU2ev               ! au
       omega3=omega1+omega2              ! au
 !
-! Now calculate Delta Normal Mode Coordinate !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
       ALLOCATE(freq(natom*3-6))
       ALLOCATE(dq(natom*3-6))
+      ALLOCATE(sval(natom*3-6))
+      ALLOCATE(g_capital(natom*3-6))
+!
+! Now calculate Delta Normal Mode Coordinate
       CALL Delta_Q(natom,dq) 
-      WRITE(*,*) dq
+!      WRITE(*,*) dq
+!
+! read the vibrational frequencies freq(:)
+      OPEN(unit=77,file='freq.dat',status='old')
+      DO i=1,natom*3-6
+        READ(77,*) freq(i)    ! in cm-1
+      END DO
+      CLOSE(77)
+!
+! calculate Huang-Rhys factors
+      CALL hrf(natom,dq,sval)
+      WRITE(*,*) sval
+!
+! calculate G terms
+      CALL gterm(natom,freq,sval,g_capital)
+
+
 
 !
       WRITE(*,'(A20)') "THANK GOD! ALL DONE!"
