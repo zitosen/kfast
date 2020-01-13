@@ -16,4 +16,5 @@
       REAL(KIND=8), PARAMETER :: h_Planck=6.62606957d-34,               &
      &ONEMOLE=6.02214129d23,PI=3.14159265358979323846264338328d0,       &
      &clight=2.99792458d8
+      COMPLEX(KIND=16),PARAMETER :: cj=(0.d0,1.d0)
       END MODULE

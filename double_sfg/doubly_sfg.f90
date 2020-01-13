@@ -48,7 +48,7 @@
       WRITE(*,*) sval
 !
 ! calculate G terms
-      CALL gterm(natom,freq,sval,g_capital)
+      CALL gterm(natom,freq,dq,sval,g_capital)
 
 
 
