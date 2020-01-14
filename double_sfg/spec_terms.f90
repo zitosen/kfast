@@ -12,33 +12,49 @@
       USE constants
 !
       CONTAINS
-      SUBROUTINE gterm(natom,freq,dq,sval,ntot,tstep,g_capital)
+! l_mode is the target mode
+! ntot is the total time steps
+      SUBROUTINE gterm(natom,freq,dq,sval,ntot,l_mode,tstep,t_kelvin, &
+     &                 g_capital)
       IMPLICIT NONE
-      INTEGER,INTENT(IN) :: natom,ntot
+      INTEGER,INTENT(IN) :: natom,ntot,l_mode
+      REAL(KIND=8),INTENT(IN) :: tstep,t_kelvin
       REAL(KIND=8),DIMENSION(natom*3-6),INTENT(IN) :: freq,dq,sval
-      REAL(KIND=8),DIMENSION(natom*3-6,ntot+1),INTENT(OUT) :: g_capital
       REAL(KIND=8),DIMENSION(natom*3-6) :: wbolt
-      COMPLEX(KIND=16),DIMENSION(natom*3-6,ntot+1) :: g_l,g_j
-      REAL(KIND=8) :: tstep,t_kelvin
-      INTEGER :: i,l,j
+      COMPLEX(KIND=16),DIMENSION(ntot+1),INTENT(OUT) :: g_capital
+      COMPLEX(KIND=16),DIMENSION(natom*3-6,ntot+1) :: g_low
+      INTEGER :: i,l
 !
 ! (1) calculate Boltzmann weight: wbolt=(e^(hbar*omega/k_B*T)-1)^-1
       DO i=1,natom*3-6
         wbolt(i)=( EXP( h_Planck*freq(i)*clight*100 /     &
      &  (k_Boltzman*t_kelvin) ) -1 )**(-1)
+!        WRITE(*,*) wbolt(i)
       END DO
-! (2) calculate the g_l term of the target mode l
+! (2) calculate the g_l and g_j terms
 !     note in complex exponential factor eiwt=e^(iwt), t is in fs, i.e.,
 !     freq [cm-1] * clight [m/sec] * 100 ---> freq' [sec-1]
 !     freq * clight * 1.0d-13 [fs-1]
       DO i=0,ntot
         DO l=1,natom*3-6
-          g_l(l,i) = -0.5*dq(l)  &
+          IF(l==l_mode) THEN
+            g_low(l,i) = -0.5*dq(l)  &
              *(1-EXP(-cj*tstep*i *freq(l)*clight*1.0d-13)) &
      &       *EXP(-sval(l)*( (1+2*wbolt(l))                &
      &       -wbolt(l)*EXP(cj *tstep*i*freq(l)*clight*1.0d-13)  &
      &       -(1+wbolt(l))*EXP(-cj*tstep*i *freq(l)*clight*1.0d-13) ))
+!            WRITE(*,*) g_low(l,i)
+          ELSE
+            g_low(l,i) = EXP( -sval(l)*( (1+2*wbolt(l))           &
+     &       -wbolt(l)*EXP(cj*tstep*i*freq(l)*clight*1.0d-13) &
+     &       -(1+wbolt(l))*EXP(-cj*tstep*i*freq(l)*clight*1.0d-13) ))
+          END IF
         END DO
+      END DO
+!  (3) calculate the G_l(t, T) terms
+      g_capital=(1.d0,0.d0)
+      DO i=l,natom*3-6
+        g_capital(:)=g_capital(:)*g_low(l,:)
       END DO
 !
       END SUBROUTINE gterm

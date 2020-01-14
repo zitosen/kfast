@@ -10,11 +10,13 @@
       PROGRAM dsfg_main
       USE constants
       USE NC_shift
-      USE huang_rhys 
+      USE huang_rhys
+      USE spec_terms 
       IMPLICIT NONE
-      REAL(KIND=8) :: omega1,omega2,omega3
-      REAL(KIND=8),ALLOCATABLE :: freq(:),dq(:),sval(:),g_capital(:)
-      INTEGER :: natom
+      REAL(KIND=8) :: omega1,omega2,omega3,tstep,t_kelvin
+      REAL(KIND=8),ALLOCATABLE :: freq(:),dq(:),sval(:)
+      COMPLEX(KIND=16),ALLOCATABLE :: g_capital(:)
+      INTEGER :: natom,ntot,l_mode,i
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !      Initialization and Configuration
@@ -26,13 +28,20 @@
       omega1=omega1/AU2ev               ! au
       omega2=omega2/AU2ev               ! au
       omega3=omega1+omega2              ! au
+      ntot=5000                         ! total steps of time t
+      tstep=1.d0                        ! time step, in femtosecond
+      t_kelvin=300.d0                   ! Kelvin temperature
+      l_mode=6                          ! the target mode
 !
       ALLOCATE(freq(natom*3-6))
       ALLOCATE(dq(natom*3-6))
       ALLOCATE(sval(natom*3-6))
-      ALLOCATE(g_capital(natom*3-6))
+      ALLOCATE(g_capital(ntot+1))
 !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Now calculate Delta Normal Mode Coordinate
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
       CALL Delta_Q(natom,dq) 
 !      WRITE(*,*) dq
 !
@@ -45,11 +54,11 @@
 !
 ! calculate Huang-Rhys factors
       CALL hrf(natom,dq,sval)
-      WRITE(*,*) sval
+!      WRITE(*,*) sval
 !
 ! calculate G terms
-      CALL gterm(natom,freq,dq,sval,g_capital)
-
+      CALL gterm(natom,freq,dq,sval,ntot,l_mode,tstep,t_kelvin, &
+     &                 g_capital)
 
 
 !
