@@ -9,7 +9,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       PROGRAM dsfg_main
       USE constants
-      USE NC_shift
+      USE nc_shift
       USE huang_rhys
       USE spec_terms 
       IMPLICIT NONE
