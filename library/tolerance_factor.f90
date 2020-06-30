@@ -13,7 +13,7 @@
       INTEGER                  :: i,j,tot_rho
       
 !
-! Perovskite stoichiometric ratios: "Cs_x FA_(1-x) Pb I_[3x+3(1-x)(1-y)] Br_3(1-x)y"
+! Perovskite stoichiometric ratios: "Cs_x FA_(1-x) Pb I_3(1-y) Br_3y"
       OPEN(UNIT=7,FILE="tolerance.dat",STATUS="UNKNOWN")
       tot_rho=1.0/rho_step+1
       ALLOCATE(toler_f(1:tot_rho,1:tot_rho))
@@ -21,10 +21,10 @@
         DO j=1,tot_rho ! for y
           x=(i-1)*rho_step
           y=(j-1)*rho_step
-          toler_f(i,j)=( (r_Cs*x + r_FA*(1-x)) + r_I*(x+(1-x)*(1-y))    &
-     &                                         + r_Br*(1-x)*y  )        &
-     &                / ( SQRT(2.0)* ( r_Pb + r_I*(x+(1-x)*(1-y))       &
-     &                                    + r_Br*(1-x)*y ) )
+          toler_f(i,j)=( (r_Cs*x + r_FA*(1-x)) + r_I*(1-y)              &
+     &                                         + r_Br*y  )              &
+     &                / ( SQRT(2.0)* ( r_Pb + r_I*(1-y)                 &
+     &                                      + r_Br*y ) )
         WRITE(7,"(3F10.4)") x, y, toler_f(i,j)
         ENDDO
         WRITE(7,*) " "
