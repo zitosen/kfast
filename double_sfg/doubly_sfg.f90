@@ -57,9 +57,13 @@
 !      WRITE(*,*) sval
 !
 ! calculate G terms
+!      WRITE(*,*) freq
       CALL gterm(natom,freq,dq,sval,ntot,l_mode,tstep,t_kelvin, &
      &                 g_capital)
-
+!      CALL gterm(natom,freq,dq,sval,ntot,l_mode,tstep,t_kelvin)
+ 
+      WRITE(*,FMT=10) ( g_capital(i), i=1,ntot+1 )
+ 10   FORMAT(ES20.12,' + ',ES20.12)
 
 !
       WRITE(*,'(A20)') "THANK GOD! ALL DONE!"
