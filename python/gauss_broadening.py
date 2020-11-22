@@ -15,37 +15,66 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-sigma = 0.2 # eV
-grids = list(range(0, 201))
-x = [-float(grid)/100-500 for grid in grids]
+sigma1 = 0.35 # eV
+sigma2 = 0.35
+sigma3 = 0.35
+xmin = -506.0
+xmax = -496.0
+grids = list(range(0, 1001))
+# total spectra
+x1 = [-float(grid)/100-496 for grid in grids]
 
-with open('O_1s.dat') as file_object:
+with open('o1s_all.dat') as file_object:
 	rows = file_object.readlines()
 
 mu = []
 for row in rows:
 	mu.append(float(row))
 
-y = []
-#gau_tests = []
-for x_grid in x:
+y1 = []
+for x1_grid in x1:
 	gau = 0.0
 	for row in rows:
-		gau = gau + 1 / (sigma * np.sqrt(2*math.pi)) *\
-np.exp(-0.5*(x_grid-float(row))**2 / sigma**2)
-	y.append(gau)
-#	gau_test = 1 / (sigma * np.sqrt(2*math.pi)) *\
-#np.exp(-0.5*(x_grid+501.0)**2 / sigma**2)
-#	gau_tests.append(gau_test)
+		gau = gau + 1 / (sigma1 * np.sqrt(2*math.pi)) *\
+np.exp(-0.5*(x1_grid-float(row))**2 / sigma1**2)
+	y1.append(gau)
+# base spectra
+x2 = [-float(grid)/100-496 for grid in grids]
 
-plt.plot(x, y, color='red', linewidth=2.0, label="O1s")
-#plt.plot(x,gau_tests)
+with open('o1s_base.dat') as file_object:
+        rows = file_object.readlines()
+
+y2 = []
+for x2_grid in x2:
+        gau = 0.0
+        for row in rows:
+                gau = gau + 1 / (sigma2 * np.sqrt(2*math.pi)) *\
+np.exp(-0.5*(x2_grid-float(row))**2 / sigma2**2)
+        y2.append(gau)
+# defect spectra
+x3 = [-float(grid)/100-496 for grid in grids]
+
+with open('o1s_defect.dat') as file_object:
+        rows = file_object.readlines()
+
+y3 = []
+for x3_grid in x3:
+        gau = 0.0
+        for row in rows:
+                gau = gau + 1 / (sigma3 * np.sqrt(2*math.pi)) *\
+np.exp(-0.5*(x3_grid-float(row))**2 / sigma3**2)
+        y3.append(gau)
+#
+plt.plot(x1, y1, color='black', linewidth=4.0, label="Total")
+plt.plot(x2, y2, color='red', linewidth=4.0, label="Pristine")
+plt.plot(x3, y3, color='blue', linewidth=4.0, label="Defect")
+#
 plt.eventplot(mu, lineoffsets=5, linelengths=10)
-plt.xlabel('E (eV)', fontsize=24)
-plt.ylabel('Intensity (a.u.)', fontsize=24)
-plt.tick_params(axis='both', which='major', labelsize=20)
-plt.xlim(-502, -500)
+plt.xlabel('E (eV)', fontsize=30)
+plt.ylabel('Intensity (a.u.)', fontsize=30)
+plt.tick_params(axis='both', which='major', labelsize=26)
+plt.xlim(xmin, xmax)
 plt.ylim(0, 120)
 
-plt.legend(fontsize=20)
+plt.legend(fontsize=26)
 plt.show()
