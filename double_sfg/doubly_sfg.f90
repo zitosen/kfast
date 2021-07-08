@@ -15,7 +15,7 @@
       IMPLICIT NONE
       REAL(KIND=8) :: omega1,omega2,omega3,tstep,t_kelvin
       REAL(KIND=8),ALLOCATABLE :: freq(:),dq(:),sval(:)
-      COMPLEX(KIND=16),ALLOCATABLE :: g_capital(:)
+      COMPLEX(KIND=8),ALLOCATABLE :: g_capital(:)
       INTEGER :: natom,ntot,l_mode,i
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -31,7 +31,7 @@
       ntot=5000                         ! total steps of time t
       tstep=1.d0                        ! time step, in femtosecond
       t_kelvin=300.d0                   ! Kelvin temperature
-      l_mode=6                          ! the target mode
+      l_mode=15                         ! the target mode
 !
       ALLOCATE(freq(natom*3-6))
       ALLOCATE(dq(natom*3-6))
@@ -53,17 +53,19 @@
       CLOSE(77)
 !
 ! calculate Huang-Rhys factors
-      CALL hrf(natom,dq,sval)
+      CALL hrf(natom,dq,freq,sval)
 !      WRITE(*,*) sval
 !
 ! calculate G terms
 !      WRITE(*,*) freq
       CALL gterm(natom,freq,dq,sval,ntot,l_mode,tstep,t_kelvin, &
      &                 g_capital)
-!      CALL gterm(natom,freq,dq,sval,ntot,l_mode,tstep,t_kelvin)
  
-      WRITE(*,FMT=10) ( g_capital(i), i=1,ntot+1 )
- 10   FORMAT(ES20.12,' + ',ES20.12)
+      DO i=1,ntot+1
+!        WRITE(*,FMT=10) REAL(g_capital(i)),' + i ', AIMAG(g_capital(i))
+        WRITE(*,*) g_capital(i)
+      ENDDO
+ 10   FORMAT(ES20.8, A, ES20.8)
 
 !
       WRITE(*,'(A20)') "THANK GOD! ALL DONE!"

@@ -9,19 +9,14 @@
       USE constants
 !
       CONTAINS
-      SUBROUTINE hrf(natom,dq,sval)
+      SUBROUTINE hrf(natom,dq,freq,sval)
       IMPLICIT NONE
       INTEGER,INTENT(IN) :: natom
       REAL(KIND=8),DIMENSION(natom*3-6),INTENT(IN) :: dq
+      REAL(KIND=8),DIMENSION(natom*3-6),INTENT(IN) :: freq
       REAL(KIND=8),DIMENSION(natom*3-6),INTENT(OUT) :: sval
-      REAL(KIND=8),DIMENSION(natom*3-6) :: freq
       INTEGER :: i
 !
-      OPEN(unit=77,file='freq.dat',status='old')
-      DO i=1,natom*3-6
-        READ(77,*) freq(i)    ! in cm-1
-      END DO
-      CLOSE(77)
 ! calculate Huang-Rhys factors
 ! freq [cm-1] * clight [cm/sec] ---> freq' [sec-1]
 !      freq * clight * 100
