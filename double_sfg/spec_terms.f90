@@ -15,13 +15,14 @@
 ! l_mode is the target mode
 ! ntot is the total time steps
       SUBROUTINE gterm(natom,freq,dq,sval,ntot,l_mode,tstep,t_kelvin, &
-     &                 g_capital)
+     &                 g_capital,omega1,omega2,d_capital)
       IMPLICIT NONE
       INTEGER,INTENT(IN) :: natom,ntot,l_mode
-      REAL(KIND=8),INTENT(IN) :: tstep,t_kelvin
+      REAL(KIND=8),INTENT(IN) :: tstep,t_kelvin,omega1,omega2
       REAL(KIND=8),DIMENSION(natom*3-6),INTENT(IN) :: freq,dq,sval
       REAL(KIND=8),DIMENSION(natom*3-6) :: wbolt
       COMPLEX(KIND=8),DIMENSION(ntot+1),INTENT(OUT) :: g_capital
+      COMPLEX(KIND=8),INTENT(OUT) :: d_capital
       COMPLEX(KIND=8), ALLOCATABLE, DIMENSION(:,:) :: g_low  ! DIMENSION(ntot+1, natom*3-6) statement
 !                                                             ! results in "Segmentation fault"
       INTEGER :: i,l
@@ -62,7 +63,16 @@
       DO i=1,natom*3-6
         g_capital(:)=g_capital(:)*g_low(:,i)
       END DO
-!
+! (4) calculate D_l(omega1,omega2,T)
+      d_capital=(0.d0,0.d0)
+      DO i=1,ntot+1,2
+        EXP(-tstep*i(cj*() ))
+      ENDDO
+
+
+
+
+
       DEALLOCATE(g_low)
       RETURN
       END SUBROUTINE gterm

@@ -29,9 +29,9 @@
       omega2=omega2/AU2ev               ! au
       omega3=omega1+omega2              ! au
       ntot=5000                         ! total steps of time t
-      tstep=1.d0                        ! time step, in femtosecond
+      tstep=0.1d0                        ! time step, in femtosecond
       t_kelvin=300.d0                   ! Kelvin temperature
-      l_mode=15                         ! the target mode
+      l_mode=180                         ! the target mode
 !
       ALLOCATE(freq(natom*3-6))
       ALLOCATE(dq(natom*3-6))
@@ -59,7 +59,7 @@
 ! calculate G terms
 !      WRITE(*,*) freq
       CALL gterm(natom,freq,dq,sval,ntot,l_mode,tstep,t_kelvin, &
-     &                 g_capital)
+     &           g_capital,omega1,omega2,d_capital)
  
       DO i=1,ntot+1
 !        WRITE(*,FMT=10) REAL(g_capital(i)),' + i ', AIMAG(g_capital(i))
