@@ -9,6 +9,12 @@
 ! Modified to accommodate the output of Gaussian 09 D.01
 ! 2019/10/18, by Z. Shen
 !
+! A flag ifresnel is added, 
+! ifresnel=0: all Fresnel factors equal to 1, that is, without considering the 
+! contributions of the Fresnel factors to the susceptibility;
+! ifresnel=1: including the Fresnel factors which is a function of
+! omega1, omega2, and omega and is fitted from experimental data.
+! 2022/4/30, by Z. Shen
 
       PROGRAM POLARIZABILITY_2ND
       IMPLICIT NONE
@@ -20,7 +26,7 @@
 ! note here DQ should be consistent with 'normal_mode_shift.f90' code
       REAL(KIND=dr), PARAMETER :: DQ=1.0D-2
       INTEGER                  :: n_mode,ibegin,iend,nstep,i,j,k,l,m,n, &
-                                  ipolar
+                                  ipolar,ifresnel
       REAL(KIND=dr)            :: step,damp,photon2,angle_sum,angle_vis,&
                                   angle_ir,Lxx_vis,Lyy_vis,Lzz_vis,temp0
       COMPLEX(KIND=dc)         :: temp
@@ -36,12 +42,13 @@
 !      
       CALL GETARG(1,arg1)
       arg1=TRIM(arg1)
-      ipolar=1
+      ipolar=0
+      ifresnel=0
       OPEN(UNIT=7,FILE=arg1,STATUS="OLD")
       READ(7,'(A)') buffer
-      READ(7,*) n_mode,ibegin,iend,step,damp,ipolar
+      READ(7,*) n_mode,ibegin,iend,step,damp,ipolar,ifresnel
       WRITE(*,*) TRIM(buffer)
-      WRITE(*,*) n_mode,ibegin,iend,step,damp
+      WRITE(*,*) n_mode,ibegin,iend,step,damp,ipolar,ifresnel
       ALLOCATE(freq(1:n_mode))
       ALLOCATE(red_mass(1:n_mode))
 ! frequency read in:
@@ -60,7 +67,11 @@
       READ(7,*) buffer
       ALLOCATE(ddipole(1:3,1:n_mode))
       DO i=1,n_mode
-        READ(7,*) ddipole(1,i),ddipole(2,i),ddipole(3,i)
+        READ(7,*) ddipole(1,i),ddipole(2,i),ddipole(3,i)   ! in (km/mole)^1/2 units
+        ddipole(1,i)=ddipole(1,i)*0.562714819d0**0.5*1.d-3 ! in au units
+        ddipole(2,i)=ddipole(2,i)*0.562714819d0**0.5*1.d-3 ! in au units
+        ddipole(3,i)=ddipole(3,i)*0.562714819d0**0.5*1.d-3 ! in au units
+!
         WRITE(*,*) ddipole(1,i),ddipole(2,i),ddipole(3,i)
       END DO
 !
@@ -195,6 +206,7 @@
 !
 ! Now calculate the effective second-order susceptibilities for
 ! CH3OH/TiO2(110) system, which has C2v sysmetry.
+!!! ---check point--- !!! 2022/4/29, Z. Shen.
 !
       OPEN(UNIT=7,FILE="Fresnel_factor",STATUS="OLD")
       READ(7,'(A)') buffer
@@ -202,9 +214,6 @@
       angle_sum=angle_sum/180.D0*PI
       angle_vis=angle_vis/180.D0*PI
       angle_ir=angle_ir/180.D0*PI
-      READ(7,'(A)') buffer
-      READ(7,*) Lxx_vis,Lyy_vis,Lzz_vis
-      READ(7,'(A)') buffer
       ALLOCATE(Lxx_sum(1:nstep))
       ALLOCATE(Lyy_sum(1:nstep))
       ALLOCATE(Lzz_sum(1:nstep))
@@ -212,15 +221,33 @@
       ALLOCATE(Lyy_ir(1:nstep))
       ALLOCATE(Lzz_ir(1:nstep))
       ALLOCATE(chi_eff(1:4,1:nstep))
-      DO i=1,nstep
-        READ(7,*) Lxx_sum(i),Lyy_sum(i),Lzz_sum(i),Lxx_ir(i),Lyy_ir(i), &
-        Lzz_ir(i)
-      END DO
+      IF(ifresnel==0) THEN
+        Lxx_vis=1.d0
+        Lyy_vis=1.d0
+        Lzz_vis=1.d0
+        DO i=1,nstep
+          Lxx_sum(i)=1.d0
+          Lyy_sum(i)=1.d0
+          Lzz_sum(i)=1.d0 
+          Lxx_ir(i)=1.d0
+          Lyy_ir(i)=1.d0
+          Lzz_ir(i)=1.d0
+        ENDDO         
+      ELSEIF(ifresnel==1) THEN
+        READ(7,'(A)') buffer
+        READ(7,*) Lxx_vis,Lyy_vis,Lzz_vis
+        READ(7,'(A)') buffer
+        DO i=1,nstep
+          READ(7,*) Lxx_sum(i),Lyy_sum(i),Lzz_sum(i),Lxx_ir(i),Lyy_ir(i), &
+          Lzz_ir(i)
+        END DO
+      ENDIF
       CLOSE(7)
 !
       OPEN(UNIT=77,FILE="polar_eff",STATUS="NEW")
       WRITE(77,"(A15,A30)") "Freq(cm-1)  ","ssp,    sps,   pss,   ppp"
 ! Refer to H.-F. Wang et al., Annu. Rev. Phys. Chem. 2015. 66:189–216
+! In the copropagation geometry, the incident plane is xOz 
       chi_eff(1,:)=Lyy_sum(:)*Lyy_vis*Lzz_ir(:)*DSIN(angle_ir)  &
                    * polar_2nd(6,:)
       chi_eff(2,:)=Lyy_sum(:)*Lzz_vis*Lyy_ir(:)*DSIN(angle_vis) &
