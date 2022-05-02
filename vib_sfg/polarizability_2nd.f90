@@ -128,9 +128,9 @@
 ! and the unit is A**2/amu^1/2, confirmed by Z. Shen, 2021/10/19
         READ(7,'(A)') buffer
         WRITE(*,*) TRIM(buffer)
+        READ(7,'(A)') buffer
+        WRITE(*,*) TRIM(buffer)
         DO i=1,n_mode
-          READ(7,'(A)') buffer
-          WRITE(*,*) TRIM(buffer)
 ! change the order of polarizability derivatives to
 !     xx,yy,zz
 !     xy,xz,yz
