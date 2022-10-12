@@ -42,7 +42,8 @@
 !      
       CALL GETARG(1,arg1)
       arg1=TRIM(arg1)
-      ipolar=0
+      ipolar=0          ! ipolar is relevant to the quantum chemistry code used 
+                        ! to produce the dipole moments and polarizabilities derivatives                       
       ifresnel=0
       OPEN(UNIT=7,FILE=arg1,STATUS="OLD")
       READ(7,'(A)') buffer
