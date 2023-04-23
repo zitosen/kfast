@@ -1,11 +1,20 @@
 ! Calculate molecular vibrational second-order polarizability
-! 2016.6.21, by zito
+! 2016.6.21, by Z. Shen
 !
 ! A flag ipolar is added, ipolar=0: polarizability derivatives are read
 ! in; ipolar=1: polarizability derivatives are computed by finite
 ! difference
-! 2019.4.9, by zito
+! 2019.4.9, by Z. Shen
+! 
+! Modified to accommodate the output of Gaussian 09 D.01
+! 2019/10/18, by Z. Shen
 !
+! A flag ifresnel is added, 
+! ifresnel=0: all Fresnel factors equal to 1, that is, without considering the 
+! contributions of the Fresnel factors to the susceptibility;
+! ifresnel=1: including the Fresnel factors which is a function of
+! omega1, omega2, and omega and is fitted from experimental data.
+! 2022/4/30, by Z. Shen
 
       PROGRAM POLARIZABILITY_2ND
       IMPLICIT NONE
@@ -17,9 +26,9 @@
 ! note here DQ should be consistent with 'normal_mode_shift.f90' code
       REAL(KIND=dr), PARAMETER :: DQ=1.0D-2
       INTEGER                  :: n_mode,ibegin,iend,nstep,i,j,k,l,m,n, &
-                                  ipolar
+                                  ipolar,ifresnel
       REAL(KIND=dr)            :: step,damp,photon2,angle_sum,angle_vis,&
-                                  angle_ir,Lxx_vis,Lyy_vis,Lzz_vis
+                                  angle_ir,Lxx_vis,Lyy_vis,Lzz_vis,temp0
       COMPLEX(KIND=dc)         :: temp
       COMPLEX(KIND=dc), ALLOCATABLE, DIMENSION(:,:) &
                                :: polar_2nd,chi_eff
@@ -33,12 +42,14 @@
 !      
       CALL GETARG(1,arg1)
       arg1=TRIM(arg1)
-      ipolar=1
+      ipolar=0          ! ipolar is relevant to the quantum chemistry code used 
+                        ! to produce the dipole moments and polarizabilities derivatives                       
+      ifresnel=0
       OPEN(UNIT=7,FILE=arg1,STATUS="OLD")
       READ(7,'(A)') buffer
-      READ(7,*) n_mode,ibegin,iend,step,damp,ipolar
+      READ(7,*) n_mode,ibegin,iend,step,damp,ipolar,ifresnel
       WRITE(*,*) TRIM(buffer)
-      WRITE(*,*) n_mode,ibegin,iend,step,damp
+      WRITE(*,*) n_mode,ibegin,iend,step,damp,ipolar,ifresnel
       ALLOCATE(freq(1:n_mode))
       ALLOCATE(red_mass(1:n_mode))
 ! frequency read in:
@@ -49,13 +60,19 @@
         WRITE(*,*) freq(i),red_mass(i)
       END DO
 !
-! dipole moment derivative (in au) read in:
+! dipole moment derivative read in:
+! unit in Gaussian 09 is (km/mole)^1/2
+! confirmed by Z. Shen, 2021/10/19 
       READ(7,'(A)') buffer
       WRITE(*,*) TRIM(buffer)
       READ(7,*) buffer
       ALLOCATE(ddipole(1:3,1:n_mode))
       DO i=1,n_mode
-        READ(7,*) ddipole(1,i),ddipole(2,i),ddipole(3,i)
+        READ(7,*) ddipole(1,i),ddipole(2,i),ddipole(3,i)   ! in (km/mole)^1/2 units
+        ddipole(1,i)=ddipole(1,i)*0.562714819d0**0.5*1.d-3 ! in au units
+        ddipole(2,i)=ddipole(2,i)*0.562714819d0**0.5*1.d-3 ! in au units
+        ddipole(3,i)=ddipole(3,i)*0.562714819d0**0.5*1.d-3 ! in au units
+!
         WRITE(*,*) ddipole(1,i),ddipole(2,i),ddipole(3,i)
       END DO
 !
@@ -103,24 +120,25 @@
         CLOSE(7)
 !
       ELSE IF(ipolar==0) THEN
-! for ipolar=0 polarizability derivatives are read directly, and
-! the orders are as below,
-!     xx,yy,zz
-!     xy,xz,yz
-!     yx,zx,zy
-! Note that it's not the same as the Gaussian output, while the same
-! as output of  the CP2K code.
+! for ipolar=0 polarizability derivatives are read directly.
+! According to the Gaussian 09 output, the  polarizability derivatives
+! have orders of
+!     xx xy xz
+!     yx yy yz
+!     zx zy zz
+! and the unit is A**2/amu^1/2, confirmed by Z. Shen, 2021/10/19
+        READ(7,'(A)') buffer
+        WRITE(*,*) TRIM(buffer)
         READ(7,'(A)') buffer
         WRITE(*,*) TRIM(buffer)
         DO i=1,n_mode
-          READ(7,'(A)') buffer
-          WRITE(*,*) TRIM(buffer)
-          DO j=1,3
-            READ(7,*)  dpolar(j*3-2,i), dpolar(j*3-1,i), dpolar(j*3,i)
-            WRITE(*,*) dpolar(j*3-2,i), dpolar(j*3-1,i), dpolar(j*3,i)
-! now dpolar may be in A^2 * amu^(-1/2), which should be confirmed in
-! the gaussian output
-          ENDDO
+! change the order of polarizability derivatives to
+!     xx,yy,zz
+!     xy,xz,yz
+!     yx,zx,zy
+          READ(7,*)  dpolar(1,i), dpolar(4,i), dpolar(5,i)
+          READ(7,*)  dpolar(7,i), dpolar(2,i), dpolar(6,i)
+          READ(7,*)  dpolar(8,i), dpolar(9,i), dpolar(3,i)
         ENDDO
       ELSE
         WRITE(*,*) "Check the parameter 'ipolar'!"
@@ -188,8 +206,8 @@
       DEALLOCATE(dpolar)
 !
 ! Now calculate the effective second-order susceptibilities for
-! CH3OH/TiO2(110) system, which has C2v sysmetry. The lab frame x'y'z' 
-! is obtained by rotating the crystallographic frame xyz with 225 degree in the plane.
+! CH3OH/TiO2(110) system, which has C2v sysmetry.
+!!! ---check point--- !!! 2022/4/29, Z. Shen.
 !
       OPEN(UNIT=7,FILE="Fresnel_factor",STATUS="OLD")
       READ(7,'(A)') buffer
@@ -197,9 +215,6 @@
       angle_sum=angle_sum/180.D0*PI
       angle_vis=angle_vis/180.D0*PI
       angle_ir=angle_ir/180.D0*PI
-      READ(7,'(A)') buffer
-      READ(7,*) Lxx_vis,Lyy_vis,Lzz_vis
-      READ(7,'(A)') buffer
       ALLOCATE(Lxx_sum(1:nstep))
       ALLOCATE(Lyy_sum(1:nstep))
       ALLOCATE(Lzz_sum(1:nstep))
@@ -207,33 +222,72 @@
       ALLOCATE(Lyy_ir(1:nstep))
       ALLOCATE(Lzz_ir(1:nstep))
       ALLOCATE(chi_eff(1:4,1:nstep))
-      DO i=1,nstep
-        READ(7,*) Lxx_sum(i),Lyy_sum(i),Lzz_sum(i),Lxx_ir(i),Lyy_ir(i), &
-        Lzz_ir(i)
-      END DO
+      IF(ifresnel==0) THEN
+        Lxx_vis=1.d0
+        Lyy_vis=1.d0
+        Lzz_vis=1.d0
+        DO i=1,nstep
+          Lxx_sum(i)=1.d0
+          Lyy_sum(i)=1.d0
+          Lzz_sum(i)=1.d0 
+          Lxx_ir(i)=1.d0
+          Lyy_ir(i)=1.d0
+          Lzz_ir(i)=1.d0
+        ENDDO         
+      ELSEIF(ifresnel==1) THEN
+        READ(7,'(A)') buffer
+        READ(7,*) Lxx_vis,Lyy_vis,Lzz_vis
+        READ(7,'(A)') buffer
+        DO i=1,nstep
+          READ(7,*) Lxx_sum(i),Lyy_sum(i),Lzz_sum(i),Lxx_ir(i),Lyy_ir(i), &
+          Lzz_ir(i)
+        END DO
+      ENDIF
       CLOSE(7)
 !
       OPEN(UNIT=77,FILE="polar_eff",STATUS="NEW")
       WRITE(77,"(A15,A30)") "Freq(cm-1)  ","ssp,    sps,   pss,   ppp"
-! Here chi_eff(1,:), chi_eff(2,:),..., correspond to ssp, sps, pss, ppp.
-      chi_eff(1,:)=0.5d0*Lyy_sum(:)*Lyy_vis*Lzz_ir(:)*DSIN(angle_ir)  &
-                   *(polar_2nd(3,:)+polar_2nd(6,:))
-      chi_eff(2,:)=0.5d0*Lyy_sum(:)*Lzz_vis*Lyy_ir(:)*DSIN(angle_vis) &
-                   *(polar_2nd(13,:)+polar_2nd(17,:))
-      chi_eff(3,:)=0.5d0*Lzz_sum(:)*Lyy_vis*Lyy_ir(:)*DSIN(angle_sum) &
-                   *(polar_2nd(22,:)+polar_2nd(26,:))
-      chi_eff(4,:)=-0.5d0*Lxx_sum(:)*Lxx_vis*Lzz_ir(:)*DCOS(angle_sum) &
-                   *DCOS(angle_vis)*DSIN(angle_ir) &
-                   *(polar_2nd(3,:)+polar_2nd(6,:))      &
-                   -0.5d0*Lxx_sum(:)*Lzz_vis*Lxx_ir(:)*DCOS(angle_sum) &
-                   *DSIN(angle_vis)*DCOS(angle_ir) &
-                   *(polar_2nd(13,:)+polar_2nd(17,:))    &
-                   +0.5d0*Lzz_sum(:)*Lxx_vis*Lxx_ir(:)*DSIN(angle_sum) &
-                   *DCOS(angle_vis)*DCOS(angle_ir) &
-                   *(polar_2nd(22,:)+polar_2nd(26,:))    &
+! Refer to H.-F. Wang et al., Annu. Rev. Phys. Chem. 2015. 66:189–216
+! In the copropagation geometry, the incident plane is xOz 
+      chi_eff(1,:)=Lyy_sum(:)*Lyy_vis*Lzz_ir(:)*DSIN(angle_ir)  &
+                   * polar_2nd(6,:)
+      chi_eff(2,:)=Lyy_sum(:)*Lzz_vis*Lyy_ir(:)*DSIN(angle_vis) &
+                   * polar_2nd(17,:)
+      chi_eff(3,:)=Lzz_sum(:)*Lyy_vis*Lyy_ir(:)*DSIN(angle_sum) &
+                   * polar_2nd(26,:)
+      chi_eff(4,:)=-Lxx_sum(:)*Lxx_vis*Lzz_ir(:)*DCOS(angle_sum) &
+                   *DCOS(angle_vis)*DSIN(angle_ir) * polar_2nd(3,:) &
+                   -Lxx_sum(:)*Lzz_vis*Lxx_ir(:)*DCOS(angle_sum) &
+                   *DSIN(angle_vis)*DCOS(angle_ir) * polar_2nd(13,:) &
+                   +Lzz_sum(:)*Lxx_vis*Lxx_ir(:)*DSIN(angle_sum) &
+                   *DCOS(angle_vis)*DCOS(angle_ir) * polar_2nd(22,:) &
                    +Lzz_sum(:)*Lzz_vis*Lzz_ir(:)*DSIN(angle_sum) &
-                   *DSIN(angle_vis)*DSIN(angle_ir) &
-                   *polar_2nd(9,:)
+                   *DSIN(angle_vis)*DSIN(angle_ir) * polar_2nd(9,:)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! If lab frame x'y'z' is rotated with respect to the crystallographic frame xyz,
+! such as in 'Liu et al., J. Phys. Chem. C 2015, 119, 23486' where the
+! rotation angle is 225 degree in the plane, chi_eff(1,:), chi_eff(2,:),..., 
+! correspond to ssp, sps, pss, ppp.
+!
+!     chi_eff(1,:)=0.5d0*Lyy_sum(:)*Lyy_vis*Lzz_ir(:)*DSIN(angle_ir)  &
+!                  *(polar_2nd(3,:)+polar_2nd(6,:))
+!     chi_eff(2,:)=0.5d0*Lyy_sum(:)*Lzz_vis*Lyy_ir(:)*DSIN(angle_vis) &
+!                  *(polar_2nd(13,:)+polar_2nd(17,:))
+!     chi_eff(3,:)=0.5d0*Lzz_sum(:)*Lyy_vis*Lyy_ir(:)*DSIN(angle_sum) &
+!                  *(polar_2nd(22,:)+polar_2nd(26,:))
+!     chi_eff(4,:)=-0.5d0*Lxx_sum(:)*Lxx_vis*Lzz_ir(:)*DCOS(angle_sum) &
+!                  *DCOS(angle_vis)*DSIN(angle_ir) &
+!                  *(polar_2nd(3,:)+polar_2nd(6,:))      &
+!                  -0.5d0*Lxx_sum(:)*Lzz_vis*Lxx_ir(:)*DCOS(angle_sum) &
+!                  *DSIN(angle_vis)*DCOS(angle_ir) &
+!                  *(polar_2nd(13,:)+polar_2nd(17,:))    &
+!                  +0.5d0*Lzz_sum(:)*Lxx_vis*Lxx_ir(:)*DSIN(angle_sum) &
+!                  *DCOS(angle_vis)*DCOS(angle_ir) &
+!                  *(polar_2nd(22,:)+polar_2nd(26,:))    &
+!                  +Lzz_sum(:)*Lzz_vis*Lzz_ir(:)*DSIN(angle_sum) &
+!                  *DSIN(angle_vis)*DSIN(angle_ir) &
+!                  *polar_2nd(9,:)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO i=1,nstep
       WRITE(77,'(4F20.12)') ABS(chi_eff(1,i)),ABS(chi_eff(2,i)), &
                        ABS(chi_eff(3,i)),ABS(chi_eff(4,i))

@@ -1,0 +1,27 @@
+Number of mode, begin and end of frequency, step size, damp(cm-1), ipolar(0 or 1), and ifresnel(0 or 1):
+4  2500  4000  1.0  3.0  0  0
+Frequencies (cm-1) and reduced masses (amu):
+3056.2407	1.0304
+3143.8664	1.1090
+3185.0518	1.1059
+3796.3375	1.0668
+Dipole moment derivatives wrt normal modes (units is different in Gaussian [(km/mol)^1/2] and CP2K (au) output):
+x          y        z
+    1.99297D+00   -1.56992D+00   -4.51300D+00
+    2.69202D-01   -2.68473D+00    1.90712D+00
+   -1.83548D-01   -2.44318D-01   -5.47991D-01
+    7.92312D+00    1.93041D+00    4.35420D+00
+Polarizability derivatives (A^2*amu^(-1/2)), order xx xy xz yx yy yz zx zy zz:
+Modes 23, 24, 25 and 30 are readin. Please check it!
+   0.931809D+00  -0.797438D-01  -0.281692D+00
+  -0.797438D-01   0.148421D+01  -0.126040D+00
+  -0.281692D+00  -0.126040D+00   0.254601D+01
+   0.424929D-02  -0.318380D+00  -0.266528D-01
+  -0.318380D+00   0.771842D+00   0.726018D+00
+  -0.266528D-01   0.726018D+00  -0.178944D+01
+  -0.808458D+00  -0.434299D+00  -0.266485D+00
+  -0.434299D+00   0.897516D-01  -0.373360D+00
+  -0.266485D+00  -0.373360D+00   0.532016D+00
+   0.113852D+01   0.267379D+00   0.410554D+00
+   0.267379D+00   0.119326D+00   0.319580D+00
+   0.410554D+00   0.319580D+00   0.130827D+01
