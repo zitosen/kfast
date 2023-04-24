@@ -7,10 +7,14 @@
 # The relevant vibrational modes are fixed in this script and should be checked carefully.
 # Zhitao Shen, 2022/5/2
 
+# vibrational modes and related parameters can be chosen interactively!
+# Zhitao Shen, 2023/4/24
+
 # read file name
-echo -e "Enter file name: \c "
-read FILE
+#echo -e "Enter file name: \c "
+#read FILE
 #echo "$FILE"
+FILE="24_H_freq_ortho.log"
 
 #
 #echo "Frequency (cm-1):"
@@ -32,22 +36,34 @@ grep -A4 "Polarizability derivatives wrt mode" "$FILE" \
      | grep -v "Polarizability" \
      | awk '{printf "%15s%15s%15s\n", $2,$3,$4}' > dpolar.dat
 #
-sed -n -e '23, 25p' -e 30p freq.dat > temp1
-sed -n -e '23, 25p' -e 30p reducedmass.dat > temp2
+# choose the concerned vib-mods
+#
+echo -e "The vibational modes you concerned, e.g., "22 25" means from mode23 to mode25 \c"
+read mode1 mode2
+sed -n -e ''$mode1', '$mode2'p' freq.dat > temp1
+sed -n -e ''$mode1', '$mode2'p' reducedmass.dat > temp2
+#sed -n -e ''$mode1', '$mode2'p' -e 30p freq.dat > temp1
+#sed -n -e ''$mode1', '$mode2'p' -e 30p reducedmass.dat > temp2
 paste temp1 temp2 > temp
 #
 # prepare the input file for 'polarizability_2nd.f90' code
 #
-echo "Number of mode, begin and end of frequency, step size, damp(cm-1), ipolar(0 or 1), and ifresnel(0 or 1):" > temp.in
-echo "4  2500  4000  1.0  3.0  0  0" >> temp.in
+echo 
+echo -e "Number of mode, begin and end of frequency(cm-1), step size(cm-1), damp(cm-1), ipolar(0 or 1), and ifresnel(0 or 1): \n "
+echo -e "e.g., 4  2500  4000  1.0  3.0  0  0 \n"
+read n_mode freq1 freq2 step damp ipolar ifresnel
+echo "Number of mode, begin and end of frequency(cm-1), step size(cm-1), damp(cm-1), ipolar(0 or 1), and ifresnel(0 or 1):" > temp.in
+echo "$n_mode $freq1 $freq2 $step $damp $ipolar $ifresnel" >> temp.in
 echo "Frequencies (cm-1) and reduced masses (amu):" >> temp.in
 cat temp >> temp.in
 
 rm freq.dat reducedmass.dat
 rm temp1 temp2 temp
 #
-sed -n -e '23, 25p' -e 30p ddipole.dat > temp3
-sed -n -e '67, 75p' -e '88, 90p' dpolar.dat > temp4 
+dpolar_begin=$(expr $mode1 \* 3 - 2)
+dpolar_end=$(expr $mode2 \* 3)
+sed -n -e ''$mode1', '$mode2'p' ddipole.dat > temp3
+sed -n -e ''$dpolar_begin', '$dpolar_end'p' dpolar.dat > temp4 
 #
 echo "Dipole moment derivatives wrt normal modes (units is different in Gaussian [(km/mol)^1/2] and CP2K (au) output):" >> temp.in
 echo "x          y        z" >> temp.in
@@ -61,7 +77,7 @@ echo "Polarizability derivatives (A^2*amu^(-1/2)), order xx xy xz yx yy yz zx zy
 echo " "
 echo "**********************"
 echo " "
-echo "Modes 23, 24, 25 and 30 are readin. Please check it!" >> temp.in
+echo -e "Modes $mode1 -- $mode2 are readin. Please check it!"
 cat temp4 >> temp.in
 #
 rm ddipole.dat dpolar.dat
