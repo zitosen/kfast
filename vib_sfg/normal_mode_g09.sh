@@ -11,9 +11,9 @@
 # Zhitao Shen, 2023/4/24
 
 # read file name
-#echo -e "Enter file name: \c "
-#read FILE
-#echo "$FILE"
+echo -e "Enter file name: \c"
+read FILE
+echo "---------------------------------------------------------------"
 FILE="24_H_freq_ortho.log"
 
 #
@@ -38,8 +38,8 @@ grep -A4 "Polarizability derivatives wrt mode" "$FILE" \
 #
 # choose the concerned vib-mods
 #
-echo -e "The vibational modes you concerned, e.g., "22 25" means from mode23 to mode25 \c"
-read mode1 mode2
+echo -e "Give vibrational modes you concerned, e.g., "22 25" means from mode23 to mode25 "
+read mode1 mode2 
 sed -n -e ''$mode1', '$mode2'p' freq.dat > temp1
 sed -n -e ''$mode1', '$mode2'p' reducedmass.dat > temp2
 #sed -n -e ''$mode1', '$mode2'p' -e 30p freq.dat > temp1
@@ -48,10 +48,12 @@ paste temp1 temp2 > temp
 #
 # prepare the input file for 'polarizability_2nd.f90' code
 #
-echo 
-echo -e "Number of mode, begin and end of frequency(cm-1), step size(cm-1), damp(cm-1), ipolar(0 or 1), and ifresnel(0 or 1): \n "
-echo -e "e.g., 4  2500  4000  1.0  3.0  0  0 \n"
-read n_mode freq1 freq2 step damp ipolar ifresnel
+echo "-------------------------------------------------------------------"
+echo -e "begin and end of frequency(cm-1), step size(cm-1), damp(cm-1), ipolar(0 or 1), and ifresnel(0 or 1):  "
+echo -e "e.g., 2500  4000  1.0  3.0  0  0 "
+read freq1 freq2 step damp ipolar ifresnel
+echo "-------------------------------------------------------------------"
+n_mode=$(expr $mode2 - $mode1 + 1)
 echo "Number of mode, begin and end of frequency(cm-1), step size(cm-1), damp(cm-1), ipolar(0 or 1), and ifresnel(0 or 1):" > temp.in
 echo "$n_mode $freq1 $freq2 $step $damp $ipolar $ifresnel" >> temp.in
 echo "Frequencies (cm-1) and reduced masses (amu):" >> temp.in
