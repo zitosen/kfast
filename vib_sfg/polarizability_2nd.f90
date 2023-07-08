@@ -205,9 +205,14 @@
       DEALLOCATE(polar_m)
       DEALLOCATE(dpolar)
 !
-! Now calculate the effective second-order susceptibilities for
-! CH3OH/TiO2(110) system, which has C2v sysmetry.
-!!! ---check point--- !!! 2022/4/29, Z. Shen.
+! Now calculate the effective second-order susceptibilities :
+! (1) For CH3OH/TiO2(110) system, which has C2v sysmetry, the
+!     seven nonvanishing macroscopic second-order susceptibility tensors
+!     are chi_(xxz=xzx, yyz=yzy, zxx, zyy, zzz).
+! (2) For a rotational isotropic surface, the 13 nonvanishing susceptibility tensors are
+!     chi_(xxz = yyz, xzx = yzy, zxx = zyy , zzz, and xyz = −yxz, zxy = −zyx, xzy = −yzx)
+! (3) Here we assumed a rotational isotropic surface!!! For other symmetry surface the code below should be checked!!! 
+! by Zhitao Shen, 2023.07.08
 !
       OPEN(UNIT=7,FILE="Fresnel_factor",STATUS="OLD")
       READ(7,'(A)') buffer
@@ -221,7 +226,7 @@
       ALLOCATE(Lxx_ir(1:nstep))
       ALLOCATE(Lyy_ir(1:nstep))
       ALLOCATE(Lzz_ir(1:nstep))
-      ALLOCATE(chi_eff(1:4,1:nstep))
+      ALLOCATE(chi_eff(1:7,1:nstep))
       IF(ifresnel==0) THEN
         Lxx_vis=1.d0
         Lyy_vis=1.d0
@@ -248,14 +253,16 @@
       OPEN(UNIT=77,FILE="polar_eff",STATUS="NEW")
       WRITE(77,"(A15,A30)") "Freq(cm-1)  ","ssp,    sps,   pss,   ppp"
 ! Refer to H.-F. Wang et al., Annu. Rev. Phys. Chem. 2015. 66:189–216
-! In the copropagation geometry, the incident plane is xOz 
-      chi_eff(1,:)=Lyy_sum(:)*Lyy_vis*Lzz_ir(:)*DSIN(angle_ir)  &
+! In the copropagation geometry, the incident plane is xOz
+!
+! The achiral susceptibility combinations:
+      chi_eff(1,:)=Lyy_sum(:)*Lyy_vis*Lzz_ir(:)*DSIN(angle_ir)  &      ! chi_ssp 
                    * polar_2nd(6,:)
-      chi_eff(2,:)=Lyy_sum(:)*Lzz_vis*Lyy_ir(:)*DSIN(angle_vis) &
+      chi_eff(2,:)=Lyy_sum(:)*Lzz_vis*Lyy_ir(:)*DSIN(angle_vis) &      ! chi_sps
                    * polar_2nd(17,:)
-      chi_eff(3,:)=Lzz_sum(:)*Lyy_vis*Lyy_ir(:)*DSIN(angle_sum) &
+      chi_eff(3,:)=Lzz_sum(:)*Lyy_vis*Lyy_ir(:)*DSIN(angle_sum) &      ! chi_pss
                    * polar_2nd(26,:)
-      chi_eff(4,:)=-Lxx_sum(:)*Lxx_vis*Lzz_ir(:)*DCOS(angle_sum) &
+      chi_eff(4,:)=-Lxx_sum(:)*Lxx_vis*Lzz_ir(:)*DCOS(angle_sum) &     ! chi_ppp
                    *DCOS(angle_vis)*DSIN(angle_ir) * polar_2nd(3,:) &
                    -Lxx_sum(:)*Lzz_vis*Lxx_ir(:)*DCOS(angle_sum) &
                    *DSIN(angle_vis)*DCOS(angle_ir) * polar_2nd(13,:) &
@@ -263,6 +270,10 @@
                    *DCOS(angle_vis)*DCOS(angle_ir) * polar_2nd(22,:) &
                    +Lzz_sum(:)*Lzz_vis*Lzz_ir(:)*DSIN(angle_sum) &
                    *DSIN(angle_vis)*DSIN(angle_ir) * polar_2nd(9,:)
+! The achiral susceptibility combinations:
+      chi_eff(5,:)=Lyy_sum(:)*Lzz_vis*Lxx_ir(:)*  &      ! chi_spp
+                   * 
+      
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! If lab frame x'y'z' is rotated with respect to the crystallographic frame xyz,
 ! such as in 'Liu et al., J. Phys. Chem. C 2015, 119, 23486' where the
