@@ -1,7 +1,24 @@
-!
+!!!!!!!!!!!!2019/06/06!!!!!!!!!!!!!!!!!!!!!!!!!
 Numerical code for the vibrational SFG spectra!
-
-by Zhitao Shen, 2019/06/06
-
+by Zhitao Shen
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
- 
+!!!!!!!!!!!!!2023/7/9!!!!!!!!!!!!!!!!!!!!!!!!!!!
+(1) modified for simulation on graphene surface!
+(2) Makefile is added!
+by Zhitao Shen
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!!!!!!!!! how to compile !!!!!!!!!!!!!!!!!!!!!!
+make
+make clean
+make veryclean
+
+!!!!!!!!!! how to run !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+(1) quantum chemistry calculations with G09
+(2) ./normal_mode_g09.sh name_of_G09.log 
+(3) ./vsfg vsfg.in 
+
+
+
+
