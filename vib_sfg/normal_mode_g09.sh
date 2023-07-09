@@ -84,6 +84,6 @@ cat temp4 >> temp.in
 #
 rm ddipole.dat dpolar.dat
 rm temp3 temp4
-mv temp.in polarizability_2nd_g09.in 
+mv temp.in vsfg.in 
 #
 echo 'Done! ^_^'
