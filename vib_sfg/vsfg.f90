@@ -319,6 +319,15 @@
                        ABS(chi_eff(6,i)), ABS(chi_eff(7,i))
       END DO
       CLOSE(77)
+!
+!!!!!!!!! write imagine chi !!!!!!!!!!!!
+      OPEN(UNIT=77,FILE="chi_eff_complex",STATUS="UNKNOWN")
+      WRITE(77,"(A15,A35)") "Freq(cm-1)  ","ppp_real,         ppp_imag"
+      DO i=1,nstep
+        photon2=ibegin+(i-1)*step
+      WRITE(77,'(F16.4, 2F20.12)') photon2, REAL(chi_eff(4,i)), AIMAG(chi_eff(4,i))
+      END DO
+      CLOSE(77)
 !     OPEN(77,FILE="chi_ssp",STATUS="NEW")
 !       DO i=1,nstep
 !       WRITE(77,'(2F20.12)') chi_eff(1,i)
