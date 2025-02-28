@@ -320,7 +320,7 @@
       END DO
       CLOSE(77)
 !
-!!!!!!!!! write imagine chi !!!!!!!!!!!!
+!!!!!!!!! write imaginary chi !!!!!!!!!!!!
       OPEN(UNIT=77,FILE="chi_eff_complex",STATUS="UNKNOWN")
       WRITE(77,"(A15,A35)") "Freq(cm-1)  ","ppp_real,         ppp_imag"
       DO i=1,nstep
