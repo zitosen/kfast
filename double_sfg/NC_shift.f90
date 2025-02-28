@@ -4,7 +4,7 @@
 !               For the displaced oscillor approximation                ! 
 !                                                                       !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      MODULE NC_shift
+      MODULE nc_shift
       IMPLICIT NONE
 !
       CONTAINS
